@@ -96,18 +96,8 @@ The report source uses `\documentclass[conference]{IEEEtran}`.
 - Only memory cost was varied; time cost and parallelism were fixed.
 
 ## Authors
+N. Janvitha Reddy
+P. Hima Varshini 
+K. Sravya Reddy
 
-| Name | Roll No. |
-| --- | --- |
-| N. Janvitha Reddy | AV.EN.U4CCE23027 |
-| P. Hima Varshini | AV.EN.U4CCE23031 |
-| K. Sravya Reddy | AV.EN.U4CCE23041 |
 
-## References
-
-1. E. Kim and H.-K. Choi, "Security analysis and bypass user authentication bound to device of Windows Hello in the wild," *Security and Communication Networks*, vol. 2021, Art. no. 6245306, 2021. doi:10.1155/2021/6245306.
-2. K. Moriarty, B. Kaliski, and A. Rusch, "PKCS #5: Password-based cryptography specification version 2.1," RFC 8018, 2017.
-3. M. S. Turan et al., "Recommendation for password-based key derivation, part 1: Storage applications," NIST SP 800-132, 2010.
-4. A. Biryukov, D. Dinu, and D. Khovratovich, "Argon2: New generation of memory-hard functions for password hashing and other applications," IEEE EuroS&P, 2016.
-5. A. Biryukov et al., "Argon2 memory-hard function for password hashing and proof-of-work applications," RFC 9106, 2021.
-6. C. Percival, "Stronger key derivation via sequential memory-hard functions," BSDCan, 2009.
