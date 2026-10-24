@@ -1,103 +1,95 @@
-# Hardening of PIN-Derived Key Protection Against Offline Brute-Force Attacks
+# 🔐 PIN Vault Cracker: PBKDF2 vs Argon2id
 
-**A controlled comparison of PBKDF2 and Argon2id**
+A small Python toolkit that encrypts a secret with a PIN, brute-forces it offline, and measures how much slower the attack gets when you switch from **PBKDF2** to **Argon2id**.
 
-Course project for *Information Security (23CSE332)*, VII Semester, Amrita Vishwa Vidyapeetham.
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![Crypto](https://img.shields.io/badge/AES--GCM-PBKDF2%20%7C%20Argon2id-green)
+![Use](https://img.shields.io/badge/use-educational%20only-orange)
 
-## Overview
+## What it does
 
-Short numeric PINs are weak secrets, so the key derivation function (KDF) that turns a PIN into an encryption key is the main barrier against guessing. Kim and Choi [1] showed that Windows Hello private-key files on devices without TPM protection can be attacked offline, with PBKDF2 (10,000 iterations) as the key-derivation step.
+- 🗄️ **Vault**: encrypts a secret with a PIN-derived key (random salt, AES-GCM)
+- 🔨 **Cracker**: offline brute-force of every PIN (`0000`, `0001`, ...)
+- ⏱️ **Benchmark**: times the KDF alone and reports guesses per second
+- ✅ **Validation**: 8 sanity checks to run before trusting any numbers
 
-This project builds a small controlled model of that protection layer and measures what changes when PBKDF2 is replaced by the memory-hard Argon2id:
+Based on the offline PIN-guessing scenario from Kim & Choi, *Windows Hello in the Wild* (2021). This is a simplified local model, not a Windows Hello implementation.
 
-- a **vault** that protects a dummy secret with a PIN, a random salt, a KDF and AES-GCM
-- an **offline cracker** that brute-forces the PIN against the vault
-- a **benchmark** that times the KDF alone and converts it to guesses per second
+## Results
 
-This is **not** a Windows Hello implementation, and no real system or account is attacked. Everything runs locally against vaults we create ourselves.
+Tested on Windows 11, Python 3.13.1, Intel Core i5-10210U (CPU only).
 
-## Key results
+| KDF | Guesses/s | Slower than PBKDF2 |
+| --- | ---: | ---: |
+| PBKDF2-HMAC-SHA512 (10,000 it.) | 90.55 | 1.00x |
+| Argon2id, 16 MiB | 50.63 | 1.79x |
+| Argon2id, 32 MiB | 29.69 | 3.05x |
+| Argon2id, 64 MiB | 15.12 | 5.99x |
+| Argon2id, 128 MiB | 7.68 | 11.79x |
 
-Measured on Windows 11, Python 3.13.1, Intel Core i5-10210U, CPU only, 10 timed trials per setting.
+Cracking PIN `1234` (1,235 guesses): **~13-15 s** with PBKDF2 vs **~134-142 s** with Argon2id (64 MiB).
 
-| Configuration | Mean (ms) | Guesses/s | Slowdown |
-| --- | ---: | ---: | ---: |
-| PBKDF2-HMAC-SHA512 (10,000 it.) | 11.04 | 90.55 | 1.00x |
-| Argon2id, 16 MiB | 19.75 | 50.63 | 1.79x |
-| Argon2id, 32 MiB | 33.69 | 29.69 | 3.05x |
-| Argon2id, 64 MiB | 66.15 | 15.12 | 5.99x |
-| Argon2id, 128 MiB | 130.17 | 7.68 | 11.79x |
+> Argon2id doesn't stop brute force. It makes every guess more expensive, for attackers and for legitimate logins.
 
-End-to-end attack on the 4-digit PIN `1234` took 1,235 guesses with both KDFs: about 13-15 s with PBKDF2 and 134-142 s with Argon2id (64 MiB).
-
-Argon2id does not stop brute force. In this CPU-only setting it raises the cost of every guess, at the price of a slower derivation for legitimate users too.
-
-## Repository contents
-
-| File | Purpose |
-| --- | --- |
-| `vault.py` | Key derivation (PBKDF2, Argon2id), AES-GCM encryption, vault creation |
-| `cracker.py` | Offline brute-force attacker (zero-padded PIN enumeration) |
-| `benchmark.py` | KDF-only timing: 1 warm-up + 10 timed calls per configuration |
-| `validation.py` | 8 correctness checks to run before trusting any timings |
-| `kdf_benchmark_summary.csv` | Final benchmark dataset used in the report |
-| `main.tex`, `figures/` | LaTeX source (IEEE conference template) and figures for the report |
-
-## Experimental configuration
-
-| Parameter | Value |
-| --- | --- |
-| Test PIN | `1234` (4 digits, 10,000 candidates) |
-| Salt / nonce | 16 / 12 random bytes |
-| Derived key | 32 bytes |
-| Baseline KDF | PBKDF2-HMAC-SHA512, 10,000 iterations |
-| Argon2id | `time_cost=3`, `parallelism=4`, memory 16 / 32 / 64 / 128 MiB |
-| Encryption | AES-GCM (authentication failure is the cracker's wrong-guess signal) |
-
-Only the Argon2id memory cost is varied between runs.
-
-## Setup
-
-Requires Python 3.10+ (developed on 3.13.1).
+## Quick start
 
 ```bash
+git clone https://github.com/<your-username>/<your-repo>.git
+cd <your-repo>
 pip install argon2-cffi cryptography
 ```
 
-Tested with `argon2-cffi 25.1.0` and `cryptography 50.0.2`. `hashlib` is part of the standard library.
-
-## Usage
-
-Run the checks first, then the benchmark and the attack.
-
 ```bash
-python validation.py   # expect: Validation result: 8/8 checks passed
-python benchmark.py    # writes the benchmark summary (mean, std, min, max, guesses/s)
-python cracker.py      # attacks a PBKDF2 vault and an Argon2id vault for PIN 1234
+python validation.py   # should print: 8/8 checks passed
+python benchmark.py    # KDF timing and guesses/s
+python cracker.py      # attack a PBKDF2 vault and an Argon2id vault
 ```
 
-<!-- TODO: add any command-line arguments your scripts take (KDF choice, PIN length, memory size) -->
+## How it works
 
-## Building the report
+```
+Vault:    PIN + salt -> KDF -> 32-byte key -> AES-GCM -> ciphertext
+Cracker:  next PIN -> same KDF + salt -> candidate key -> AES-GCM decrypt
+          decrypts OK -> PIN found | auth fails -> next guess
+```
 
-The report source uses `\documentclass[conference]{IEEEtran}`.
+AES-GCM rejects a wrong key at decryption time, which is what tells the cracker whether a guess was right.
 
-1. Upload the project to Overleaf (New Project, then Upload Project) or compile locally with `pdflatex`.
-2. Set `main.tex` as the main file and compile with pdfLaTeX.
-3. Keep the `figures/` folder next to `main.tex`.
+## Configuration
+
+| Setting | Value |
+| --- | --- |
+| Test PIN | `1234` (4 digits) |
+| Salt / nonce | 16 / 12 random bytes |
+| Key length | 32 bytes |
+| PBKDF2 | HMAC-SHA512, 10,000 iterations |
+| Argon2id | `time_cost=3`, `parallelism=4`, memory 16/32/64/128 MiB |
+
+## Project structure
+
+```
+├── vault.py                    # KDFs, AES-GCM, vault creation
+├── cracker.py                  # offline brute-force attacker
+├── benchmark.py                # KDF-only timing
+├── validation.py               # correctness checks
+├── kdf_benchmark_summary.csv   # benchmark results
+└── report/                     # LaTeX report (IEEE format)
+```
 
 ## Limitations
 
-- Controlled local simulation only; no real Windows Hello installation was attacked.
-- CPU-only, single process. No GPU or specialised-hardware benchmark was run, so the memory-hardness benefit against such attackers comes from the literature, not from these experiments.
-- Results depend on our hardware and background load; 10 trials per setting is a small sample.
-- Only a 4-digit PIN was attacked end to end. Longer-PIN figures are extrapolations from the benchmark rate.
-- The end-to-end and KDF-only Argon2id rates differ (about 9 vs 15 guesses/s at 64 MiB) and the cause was not isolated.
-- Only memory cost was varied; time cost and parallelism were fixed.
+- CPU-only, single process. GPU attackers are not tested.
+- Only a 4-digit PIN was attacked end to end.
+- Results vary with hardware and background load (10 trials per setting).
+
+## ⚠️ Disclaimer
+
+For education and research only. It runs against vaults you create yourself. Don't use it against systems or data you don't own.
 
 ## Authors
-N. Janvitha Reddy
-P. Hima Varshini 
-K. Sravya Reddy
 
+- N. Janvitha Reddy (AV.EN.U4CCE23027)
+- P. Hima Varshini (AV.EN.U4CCE23031)
+- K. Sravya Reddy (AV.EN.U4CCE23041)
 
+Amrita Vishwa Vidyapeetham · Information Security (23CSE332)
