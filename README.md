@@ -1,4 +1,4 @@
-# 🔐 PIN Vault Cracker: PBKDF2 vs Argon2id
+# 🔐 Hardening of PIN-Derived Key Protection Against Offline Brute-Force Attacks: A Controlled Comparison of PBKDF2 and Argon2id
 
 A small Python toolkit that encrypts a secret with a PIN, brute-forces it offline, and measures how much slower the attack gets when you switch from **PBKDF2** to **Argon2id**.
 
@@ -88,8 +88,7 @@ For education and research only. It runs against vaults you create yourself. Don
 
 ## Authors
 
-- N. Janvitha Reddy (AV.EN.U4CCE23027)
-- P. Hima Varshini (AV.EN.U4CCE23031)
-- K. Sravya Reddy (AV.EN.U4CCE23041)
+- N. Janvitha Reddy 
+- P. Hima Varshini 
+- K. Sravya Reddy 
 
-Amrita Vishwa Vidyapeetham · Information Security (23CSE332)
